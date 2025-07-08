@@ -1,16 +1,20 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime,timezone
+from flask_login import UserMixin
 
 db = SQLAlchemy()
 
-class Admin(db.Model):
+class Admin(db.Model, UserMixin):
     __tablename__ = "Admin"
     id = db.Column(db.Integer, primary_key = True, autoincrement = True)
     name = db.Column(db.String, nullable = False)
     email = db.Column(db.String, unique =True, nullable = False)
     password = db.Column(db.String, nullable = False)
 
-class User(db.Model):
+    def get_id(self):
+        return self.email
+
+class User(db.Model, UserMixin):
     __tablename__ = "User"
     id = db.Column(db.Integer, primary_key = True, autoincrement = True)
     name = db.Column(db.String, nullable = False)
@@ -18,6 +22,9 @@ class User(db.Model):
     password = db.Column(db.String, nullable = False)
     address = db.Column(db.String, nullable = False)
     phone = db.Column(db.String, nullable = False)
+
+    def get_id(self):
+        return self.email
 
 class ParkingLot(db.Model):
     __tablename__ = "ParkingLot"
@@ -33,7 +40,7 @@ class ParkingSpot(db.Model):
     lot_id= db.Column(db.Integer, db.ForeignKey("ParkingLot.id"), nullable = False)
     status = db.Column(db.String, nullable = False)
     spot_number= db.Column(db.String, unique = True, nullable = False)
-    lot = db.realtionship("ParkingSpot", backref = "spots")
+    lot = db.relationship("ParkingLot", backref = "spots")
 
 class Reservation(db.Model):
     __tablename__ = "Reservation"
