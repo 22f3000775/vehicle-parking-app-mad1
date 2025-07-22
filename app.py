@@ -16,7 +16,7 @@ def create_app():
     # Set up Flask-Login
     login_manager = LoginManager()
     login_manager.init_app(app)
-    login_manager.login_view = "routes.login"  # Optional: redirect to login if not authenticated
+    #login_manager.login_view = "routes.login"  # Optional: redirect to login if not authenticated
 
     @login_manager.user_loader
     def load_user(user_id):

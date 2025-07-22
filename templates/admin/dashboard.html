@@ -1,0 +1,127 @@
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f5f7fa;
+        }
+        .sidebar {
+            height: 100vh;
+            background-color: #1f2a44;
+            padding-top: 40px;
+            color: white;
+        }
+        .sidebar h4 {
+            font-weight: bold;
+        }
+        .sidebar .nav-link {
+            background-color: white;
+            color: #1f2a44;
+            border-radius: 20px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+        .topbar {
+            background-color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+        }
+        .stat-card {
+            border-radius: 15px;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .user-link {
+            text-decoration: underline;
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar d-flex flex-column align-items-start ps-4">
+                <div class="mb-4">
+                    <h4><i class="bi bi-p-circle"></i> WELCOME !</h4>
+                </div>
+                <a href="#" class="nav-link"><i class="bi bi-house-door"></i> Dashboard</a>
+                <a href="/admin/lots" class="nav-link"><i class="bi bi-p-circle-fill"></i> Parking Lots</a>
+                <a href="/admin/analytics" class="nav-link"><i class="bi bi-bar-chart-line"></i> Analytics</a>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10">
+
+                <!-- Top Bar -->
+                <div class="topbar">
+                    <div></div>
+                    <div class="d-flex align-items-center">
+                        <a href="/logout" class="me-3 text-dark">Logout</a>
+                        <i class="bi bi-person-circle fs-3 text-dark"></i>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="container mt-4">
+                    {% set lot_count = lot_count or 0 %}
+                    {% set occupancy = occupancy or 0 %}
+                    {% set recent_actions = recent_actions or [] %}
+
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="stat-card text-center">
+                                <h5>Total Parking Lots</h5>
+                                <h2>{{ lot_count }}</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card text-center">
+                                <h5>Occupancy Rate</h5>
+                                <h2>{{ occupancy }}%</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card text-center">
+                                <h5>Users</h5>
+                                <a href="/admin/users" class="user-link">View User Database</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Actions -->
+                    <div class="mt-5">
+                        <h5>Recent Admin Actions</h5>
+                        <ul class="list-group">
+                            {% for action in recent_actions %}
+                            <li class="list-group-item">{{ action }}</li>
+                            {% else %}
+                            <li class="list-group-item text-muted">No recent activity.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+        crossorigin="anonymous"></script>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Courier New', Courier, monospace;
+      background: #f5f8ff;
+      color: #223456;
+    }
+
+    /* ============== NAVBAR ============== */
+    .navbar {
+      width: 100%;
+      background: #223456;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 40px;
+      box-sizing: border-box;
+    }
+
+    .logo-circle {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      background: transparent;
+    }
+
+    .user-profile {
+      width: 48px;
+      height: 48px;
+      background: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-profile svg {
+      width: 28px;
+      height: 28px;
+      fill: #223456;
+    }
+
+    /* ============== DASHBOARD BODY ============== */
+    .container {
+      display: flex;
+      padding: 40px;
+      gap: 48px;
+      box-sizing: border-box;
+    }
+
+    .dashboard-main {
+      flex: 1;
+    }
+
+    .welcome-text {
+      font-size: 2rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      margin-bottom: 30px;
+    }
+
+    .dashboard-panels {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .panel {
+      border: 2.5px solid #223456;
+      border-radius: 14px;
+      background: #fff;
+      padding: 30px;
+      font-size: 1.3rem;
+      text-transform: uppercase;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      box-shadow: 3px 6px 0 #cbd3e0;
+    }
+
+    /* ============== RIGHT ACTION BUTTONS ============== */
+    .sidebar-buttons {
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .sidebar-button {
+      background: #223456;
+      color: #fff;
+      border: none;
+      border-radius: 24px;
+      padding: 16px 24px;
+      font-size: 1rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      box-shadow: 3px 6px 0 #171d22;
+      text-transform: uppercase;
+    }
+
+    .sidebar-button svg {
+      width: 20px;
+      height: 20px;
+      fill: #fff;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        padding: 24px;
+      }
+      .sidebar-buttons {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ✅ TOP NAVBAR -->
+  <div class="navbar">
+    <!-- Left: LOGO -->
+    <div class="logo-circle">P</div>
+
+    <!-- Right: PROFILE ICON -->
+    <div class="user-profile">
+      <svg viewBox="0 0 32 32">
+        <circle cx="16" cy="12" r="7"/>
+        <path d="M3,29c0-6.1,6-11,13-11s13,4.9,13,11"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ✅ DASHBOARD CONTENT -->
+  <div class="container">
+    <!-- Main Dashboard Actions -->
+    <div class="dashboard-main">
+      <div class="welcome-text">WELCOME !</div>
+
+      <div class="dashboard-panels">
+        <div class="panel">NOTIFICATION PANEL</div>
+        <div class="panel">ACTIVE BOOKINGS</div>
+        <div class="panel">BOOK MORE SPOTS</div>
+      </div>
+    </div>
+
+    <!-- Sidebar Buttons -->
+    <div class="sidebar-buttons">
+      <button class="sidebar-button">
+        <!-- Home Icon -->
+        <svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8v8a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2v-8z"/></svg>
+        Dashboard
+      </button>
+      <button class="sidebar-button">
+        <!-- File Icon -->
+        <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z M6 6h12v2H6z M6 10h12v2H6z M6 14h8v2H6z"/></svg>
+        History
+      </button>
+      <button class="sidebar-button">
+        <!-- Bookmark Icon -->
+        <svg viewBox="0 0 24 24"><path d="M6 4v17l6-5 6 5V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2z"/></svg>
+        Saved
+      </button>
+    </div>
+  </div>
+</body>
+</html>
