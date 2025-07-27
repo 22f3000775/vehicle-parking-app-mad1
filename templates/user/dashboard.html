@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>User Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
@@ -12,7 +12,6 @@
       color: #223456;
     }
 
-    /* ============== NAVBAR ============== */
     .navbar {
       width: 100%;
       background: #223456;
@@ -37,6 +36,37 @@
       background: transparent;
     }
 
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: #fff;
+      min-width: 160px;
+      box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+      z-index: 1;
+      border-radius: 8px;
+    }
+
+    .dropdown-content a {
+      color: #223456;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      font-weight: bold;
+    }
+
+    .dropdown-content a:hover {
+      background-color: #f1f1f1;
+    }
+
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+
     .user-profile {
       width: 48px;
       height: 48px;
@@ -53,7 +83,6 @@
       fill: #223456;
     }
 
-    /* ============== DASHBOARD BODY ============== */
     .container {
       display: flex;
       padding: 40px;
@@ -90,7 +119,42 @@
       box-shadow: 3px 6px 0 #cbd3e0;
     }
 
-    /* ============== RIGHT ACTION BUTTONS ============== */
+    .booking-card {
+      border: 3px solid #497ec5;
+      background: #f5faff;
+      padding: 20px 24px;
+      font-size: 1.1rem;
+      text-transform: none;
+      letter-spacing: 0.5px;
+    }
+    .booking-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 10px;
+    }
+    .booking-card p {
+      margin: 5px 0;
+      font-weight: normal;
+      text-transform: none;
+      letter-spacing: normal;
+      font-size: 1rem;
+    }
+    .booking-card form {
+      margin-top: 10px;
+    }
+    .booking-card button[type="submit"] {
+      font-size: 1rem;
+      padding: 8px 22px;
+      border-radius: 20px;
+      background: #223456;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .booking-card button[type="submit"]:hover {
+      background: #2e4976;
+    }
+
     .sidebar-buttons {
       width: 280px;
       display: flex;
@@ -112,12 +176,80 @@
       cursor: pointer;
       box-shadow: 3px 6px 0 #171d22;
       text-transform: uppercase;
+      transition: background 0.18s;
+    }
+    .sidebar-button:hover {
+      background: #2e4976;
     }
 
     .sidebar-button svg {
       width: 20px;
       height: 20px;
       fill: #fff;
+    }
+
+    /* Modal styles retained for spot booking modal */
+    .modal-bg {
+      display: none;
+      position: fixed;
+      z-index: 99;
+      left: 0; top: 0; right: 0; bottom: 0;
+      background: rgba(34,52,86,0.18);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-bg.active { display: flex; }
+    .modal-popup {
+      background: #fff;
+      padding: 35px 32px 28px 32px;
+      border-radius: 20px;
+      box-shadow: 5px 12px 28px 4px #aac5f644;
+      min-width: 320px;
+      min-height: 80px;
+      max-width: 92vw;
+      position: relative;
+    }
+    .modal-title {
+      font-size: 1.35rem;
+      font-weight: bold;
+      margin-bottom: 18px;
+      letter-spacing: 1px;
+      color: #223456;
+      text-align: center;
+    }
+    .spots-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 16px;
+      align-items: stretch;
+    }
+    .spot-btn {
+      background: #223456;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      padding: 14px 28px;
+      text-align: left;
+      letter-spacing: 0.7px;
+      cursor: pointer;
+      box-shadow: 1.5px 3px 0 #b7badf;
+      transition: background 0.17s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .spot-btn:hover { background: #497ec5; }
+    .close-modal {
+      position: absolute;
+      right: 26px; top: 18px;
+      font-size: 1.6rem;
+      color: #223456;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
     }
 
     @media (max-width: 768px) {
@@ -132,21 +264,28 @@
         gap: 14px;
       }
     }
+    @media (max-width: 700px) {
+      .modal-popup { padding: 20px 8px; min-width: 0;}
+    }
   </style>
 </head>
 <body>
 
   <!-- ✅ TOP NAVBAR -->
   <div class="navbar">
-    <!-- Left: LOGO -->
     <div class="logo-circle">P</div>
-
-    <!-- Right: PROFILE ICON -->
-    <div class="user-profile">
-      <svg viewBox="0 0 32 32">
-        <circle cx="16" cy="12" r="7"/>
-        <path d="M3,29c0-6.1,6-11,13-11s13,4.9,13,11"/>
-      </svg>
+    <div class="dropdown">
+      <div class="user-profile">
+        <svg viewBox="0 0 32 32">
+          <circle cx="16" cy="12" r="7"/>
+          <path d="M3,29c0-6.1,6-11,13-11s13,4.9,13,11"/>
+        </svg>
+      </div>
+      <div class="dropdown-content">
+        <a href="#">{{ current_user.name }}</a>
+        <a href="#">Profile</a>
+        <a href="{{ url_for('routes_bp.logout') }}">Logout</a>
+      </div>
     </div>
   </div>
 
@@ -154,33 +293,116 @@
   <div class="container">
     <!-- Main Dashboard Actions -->
     <div class="dashboard-main">
-      <div class="welcome-text">WELCOME !</div>
+      <div class="welcome-text">WELCOME {{ current_user.name.upper() }}!</div>
 
       <div class="dashboard-panels">
-        <div class="panel">NOTIFICATION PANEL</div>
-        <div class="panel">ACTIVE BOOKINGS</div>
-        <div class="panel">BOOK MORE SPOTS</div>
+        {% if active_bookings %}
+          {% for booking in active_bookings %}
+            <div class="panel booking-card">
+              <h3>Vehicle: {{ booking.vehicle.vehicle_type }} - {{ booking.vehicle.vehicle_number }}</h3>
+              <p><strong>Parking Lot:</strong> {{ booking.spot.lot.address }}</p>
+              <p><strong>Spot Number:</strong> {{ booking.spot.spot_number }}</p>
+              <p>
+                <strong>Start Time:</strong> {{ booking.entry_ts.strftime('%Y-%m-%d %H:%M') }}
+                &nbsp;–&nbsp;
+                <strong>End Time:</strong> {{ booking.exit_ts.strftime('%Y-%m-%d %H:%M') }}
+              </p>
+              <form method="POST" action="{{ url_for('routes_bp.end_booking', booking_id=booking.id) }}">
+                <button type="submit">End Booking</button>
+              </form>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>No active bookings.</p>
+        {% endif %}
+
+        {% if notifications %}
+          <div class="panel">
+            {% for n in notifications %}
+              <div>{{ n.message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
     </div>
 
     <!-- Sidebar Buttons -->
     <div class="sidebar-buttons">
-      <button class="sidebar-button">
-        <!-- Home Icon -->
-        <svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8v8a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2v-8z"/></svg>
-        Dashboard
+      <button class="sidebar-button" onclick="openModal()">
+        <svg viewBox="0 0 24 24" style="width:20px; height:20px; fill:#fff;">
+          <path d="M5 16L3 12V7a1 1 0 0 1 1-1h1v-2h2v2h6V6h2v2h1a1 1 0 0 1 1 1v5l-2 4H5z"/>
+        </svg>
+        Book a Spot
       </button>
+
+     
       <button class="sidebar-button">
-        <!-- File Icon -->
         <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z M6 6h12v2H6z M6 10h12v2H6z M6 14h8v2H6z"/></svg>
         History
       </button>
       <button class="sidebar-button">
-        <!-- Bookmark Icon -->
         <svg viewBox="0 0 24 24"><path d="M6 4v17l6-5 6 5V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2z"/></svg>
         Saved
       </button>
     </div>
   </div>
+
+  <!-- Modal (hidden by default) -->
+  <div class="modal-bg" id="spotModal">
+    <div class="modal-popup">
+      <button class="close-modal" onclick="closeModal()">&times;</button>
+      <div class="modal-title">Select Your Location</div>
+
+      <div style="margin-top: 16px; text-align: center;">
+        <select id="location-select" style="padding: 10px 20px; font-size: 1.1rem; border-radius: 8px; border: 1.5px solid #223456; min-width: 200px;">
+          <option value="" disabled selected>Select your location</option>
+          {% for location in locations %}
+            <option value="{{ location }}">{{ location }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button id="go-to-location-btn" disabled style="
+        margin-top: 28px;
+        padding: 12px 32px;
+        font-size: 1.2rem;
+        background: #223456;
+        color: white;
+        border: none;
+        border-radius: 28px;
+        cursor: pointer;
+        box-shadow: 2px 4px 0 #171d22;
+        transition: background 0.2s;
+      ">Go</button>
+    </div>
+  </div>
+
+  <script>
+    function openModal() {
+      document.getElementById('spotModal').classList.add('active');
+      document.getElementById('go-to-location-btn').disabled = true;
+    }
+    function closeModal() {
+      document.getElementById('spotModal').classList.remove('active');
+    }
+    // Close modal if clicking outside the popup
+    document.getElementById('spotModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    const locationSelect = document.getElementById('location-select');
+    const goBtn = document.getElementById('go-to-location-btn');
+
+    locationSelect.addEventListener('change', function () {
+      goBtn.disabled = !this.value;
+    });
+
+    goBtn.addEventListener('click', function () {
+      const selectedLocation = locationSelect.value;
+      if(selectedLocation) {
+        window.location.href = "{{ url_for('routes_bp.spot_booking_location', location='__location__') }}".replace('__location__', encodeURIComponent(selectedLocation));
+      }
+    });
+  </script>
 </body>
 </html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin - Parking Analytics</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      color: #223456;
+      padding: 30px 50px;
+      min-height: 100vh;
+    }
+    h1 {
+      margin-bottom: 32px;
+      font-weight: 700;
+      font-size: 2.4rem;
+      letter-spacing: 1.2px;
+      border-bottom: 3px solid #223456;
+      padding-bottom: 10px;
+    }
+    section {
+      margin-bottom: 50px;
+    }
+    section h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #1f2a44;
+    }
+    .stats p {
+      font-size: 1.15rem;
+      margin: 8px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgb(34 52 86 / 0.1);
+      font-size: 1rem;
+    }
+    thead {
+      background-color: #223456;
+      color: white;
+    }
+    th, td {
+      padding: 12px 18px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+      vertical-align: middle;
+    }
+    tbody tr:hover {
+      background-color: #f0f4ff;
+    }
+    /* Responsive tables */
+    @media (max-width: 900px) {
+      body {
+        padding: 20px;
+      }
+      table, thead, tbody, th, td, tr {
+        display: block;
+        width: 100%;
+      }
+      thead tr {
+        display: none;
+      }
+      tbody tr {
+        margin-bottom: 1.2rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgb(34 52 86 / 0.1);
+        padding: 12px;
+      }
+      tbody td {
+        border-bottom: none;
+        position: relative;
+        padding-left: 55%;
+        white-space: normal;
+        text-align: right;
+      }
+      tbody td::before {
+        position: absolute;
+        left: 16px;
+        width: 45%;
+        white-space: nowrap;
+        font-weight: 600;
+        text-align: left;
+        content: attr(data-label);
+        color: #223456;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px;">
+    <h1 style="margin: 0;">Parking Analytics</h1>
+    <a href="{{ url_for('routes_bp.user_dashboard') }}" 
+       style="padding: 8px 20px; background: #223456; color: white; border-radius: 18px; text-decoration: none; font-weight: 600; white-space: nowrap;">
+      ← Return to Dashboard
+    </a>
+  </div>
+
+  <section>
+    <h2>Overall Statistics</h2>
+    <div class="stats">
+      <p><strong>Total Parking Lots:</strong> {{ total_lots_created }}</p>
+      <p><strong>Total Reservations:</strong> {{ total_reservations }}</p>
+      <p><strong>Average Reservation Duration (days):</strong> {{ "%.2f"|format(avg_duration or 0) }}</p>
+      <p><strong>Total Revenue:</strong> ₹{{ "%.2f"|format(total_revenue or 0) }}</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Current Parking Lots Overview</h2>
+    {% if lots_data %}
+      <table>
+        <thead>
+          <tr>
+            <th>Lot ID</th>
+            <th>Address</th>
+            <th>Total Spots</th>
+            <th>Occupied Spots</th>
+            <th>Available Spots</th>
+            <th>Price per Hour (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lot in lots_data %}
+            <tr>
+              <td data-label="Lot ID">{{ lot.id }}</td>
+              <td data-label="Address">{{ lot.address }}</td>
+              <td data-label="Total Spots">{{ lot.total_spots }}</td>
+              <td data-label="Occupied Spots">{{ lot.occupied_spots }}</td>
+              <td data-label="Available Spots">{{ lot.total_spots - lot.occupied_spots }}</td>
+              <td data-label="Price (₹)">{{ lot.price }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No parking lots found in the system.</p>
+    {% endif %}
+  </section>
+
+</body>
+</html>

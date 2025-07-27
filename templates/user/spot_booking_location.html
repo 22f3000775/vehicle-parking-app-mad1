@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Parking Lots in {{ location }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      background: #f5f8ff;
+      color: #223456;
+      font-family: 'Courier New', Courier, monospace;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    .navbar {
+      width: 100%;
+      background: #223456;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 40px;
+      box-sizing: border-box;
+    }
+    .logo-circle {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      background: transparent;
+      cursor: default;
+    }
+    .main {
+      padding: 40px 8vw 0 8vw;
+      max-width: 1300px;
+      margin: auto;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 30px;
+      text-align: left;
+    }
+    .cards-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 32px;
+      justify-content: flex-start;
+      margin-bottom: 60px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      border: 2.5px solid #223456;
+      box-shadow: 3px 7px 15px rgba(34,52,86,0.09);
+      padding: 28px 28px 22px 28px;
+      width: 315px;
+      min-width: 240px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+      position: relative;
+      transition: box-shadow 0.18s, transform 0.13s;
+    }
+    .card:hover {
+      box-shadow: 7px 14px 30px rgba(34,52,86,0.16);
+      transform: translateY(-3px);
+      border-color: #2e4976;
+    }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: bold;
+      margin-bottom: 14px;
+      letter-spacing: 1px;
+      color: #223456;
+    }
+    .card-info {
+      font-size: 1.04rem;
+      margin: 6px 0 0 0;
+      color: #223456;
+      letter-spacing: 0.7px;
+    }
+    .book-btn {
+      margin-top: 18px;
+      background: #223456;
+      color: #fff;
+      padding: 14px 32px;
+      border: none;
+      border-radius: 18px;
+      font-weight: bold;
+      font-size: 1rem;
+      letter-spacing: 1.3px;
+      box-shadow: 2px 4px 0 #171d22;
+      cursor: pointer;
+      transition: background 0.17s;
+      align-self: stretch;
+    }
+    .book-btn:hover {
+      background: #2e4976;
+    }
+    .no-lots-msg {
+      font-size: 1.1rem;
+      color: #444960;
+      margin-top: 32px;
+      margin-left: 4px;
+    }
+    /* Modal styles */
+    .modal-bg {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0; top: 0; right: 0; bottom: 0;
+      background: rgba(34, 52, 86, 0.30);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-bg.active { display: flex; }
+    .modal-popup {
+      background: #fff;
+      border-radius: 20px;
+      padding: 32px 28px 20px 28px;
+      min-width: 300px;
+      max-width: 87vw;
+      box-shadow: 6px 20px 40px #22345633;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .close-modal {
+      position: absolute;
+      right: 22px;
+      top: 16px;
+      background: transparent;
+      border: none;
+      font-size: 1.65rem;
+      color: #223456;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    label {
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input, select {
+      margin-top: 6px;
+      padding: 8px 12px;
+      border-radius: 9px;
+      border: 1.5px solid #223456;
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button.book-btn[type="submit"] {
+      margin-top: 18px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .main { padding: 30px 2vw 0 2vw; }
+      .cards-container { gap: 18px; }
+      .card { width: 100%; max-width: 350px;}
+    }
+    @media (max-width: 550px) {
+      .navbar { padding: 8px 10px; }
+      .logo-circle { width: 36px; height: 36px; font-size: 1.1rem; }
+      .main { padding: 24px 2vw 0 2vw;}
+      .cards-container { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <div class="navbar">
+    <div class="logo-circle" style="cursor: default;">P</div>
+    <div style="font-size:1.15rem;font-weight:bold;">{{ location }}</div>
+  </div>
+  <div class="main">
+    <h1>Available Parking Lots in {{ location }}</h1>
+    <div class="cards-container">
+      {% for lot in parking_lots %}
+        <div class="card">
+          <div class="card-title">{{ lot.address }}</div>
+          <div class="card-info"><strong>Price:</strong> ₹{{ lot.price }}</div>
+          <div class="card-info"><strong>Total Spots:</strong> {{ lot.no_of_spots }}</div>
+          <div class="card-info"><strong>Available Spots:</strong> {{ lot.spots_available }}</div>
+          {% if lot.vacancy is defined %}
+            <div class="card-info"><strong>Vacancy:</strong> {{ lot.vacancy }}</div>
+          {% endif %}
+          <button class="book-btn" onclick="openBookingModal('{{ lot.id }}', '{{ lot.address|e }}', '{{ lot.price }}')">Book</button>
+        </div>
+      {% else %}
+        <div class="no-lots-msg">No parking lots available in this location.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Booking Modal Popup -->
+<div class="modal-bg" id="bookLotModal" role="dialog" aria-modal="true" aria-labelledby="modal-lot-address">
+  <div class="modal-popup">
+    <button class="close-modal" aria-label="Close booking form" onclick="closeBookingModal()">&times;</button>
+    <h2 id="modal-lot-address"></h2>
+    <p><strong>Price per Spot:</strong> ₹<span id="modal-lot-price"></span></p>
+    <form id="booking-form" method="POST" action="">
+      <!-- The form action will be set dynamically via JS -->
+      <input type="hidden" name="lot_id" id="modal-lot-id" />
+
+      <label for="vehicle-type">Vehicle Type:</label>
+      <input 
+        type="text" 
+        id="vehicle-type" 
+        name="vehicle_type" 
+        placeholder="e.g., Sedan, SUV" 
+        required 
+        autocomplete="off"
+      />
+
+      <label for="vehicle-number">Vehicle Number:</label>
+      <input 
+        type="text" 
+        id="vehicle-number" 
+        name="vehicle_number" 
+        placeholder="e.g., KA01AB1234" 
+        required 
+        autocomplete="off"
+      />
+
+      <label for="booking-date">Date:</label>
+      <input 
+        type="date" 
+        name="booking_date" 
+        id="booking-date" 
+        required 
+      />
+
+      <label for="booking-time">Time:</label>
+      <input 
+        type="time" 
+        name="booking_time" 
+        id="booking-time" 
+        required 
+      />
+
+      <label for="booking-duration">Duration (hours):</label>
+      <input 
+        type="number" 
+        id="booking-duration" 
+        name="booking_duration" 
+        min="1" 
+        max="24" 
+        step="1" 
+        required 
+      />
+
+      <button type="submit" class="book-btn">Confirm Booking</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openBookingModal(lotId, address, price) {
+    // Show modal
+    const modal = document.getElementById('bookLotModal');
+    modal.classList.add('active');
+
+    // Set lot info
+    document.getElementById('modal-lot-address').textContent = address;
+    document.getElementById('modal-lot-price').textContent = price;
+    document.getElementById('modal-lot-id').value = lotId;
+
+    // Set the form action dynamically to the backend booking POST route for this lot
+    const form = document.getElementById('booking-form');
+    form.action = `/user/book/${lotId}`;
+
+    // Clear/reset the form inputs
+    form.reset();
+  }
+
+  function closeBookingModal() {
+    document.getElementById('bookLotModal').classList.remove('active');
+  }
+
+  document.getElementById('bookLotModal').addEventListener('click', function (e) {
+    if (e.target === this) closeBookingModal();
+  });
+</script>
+
+</body>
+</html>

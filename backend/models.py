@@ -39,20 +39,26 @@ class ParkingSpot(db.Model):
     id = db.Column(db.Integer, primary_key = True, autoincrement = True)
     lot_id= db.Column(db.Integer, db.ForeignKey("ParkingLot.id"), nullable = False)
     status = db.Column(db.String, nullable = False)
-    spot_number= db.Column(db.String, unique = True, nullable = False)
+    spot_number= db.Column(db.String, nullable = False)
     lot = db.relationship("ParkingLot", backref = "spots")
+
+    __table_args__ = (
+        db.UniqueConstraint('lot_id', 'spot_number', name='_lot_spot'),
+    )
 
 class Reservation(db.Model):
     __tablename__ = "Reservation"
     id = db.Column(db.Integer, primary_key = True, autoincrement = True)
     spot_id = db.Column(db.Integer, db.ForeignKey("ParkingSpot.id"), nullable = False)
     user_id = db.Column(db.Integer, db.ForeignKey("User.id"), nullable = False) 
+    vehicle_id = db.Column(db.Integer, db.ForeignKey("Vehicle.id"), nullable=True)
     status = db.Column(db.String, nullable = False)
     cost = db.Column(db.Numeric(10, 2), nullable=False)
     entry_ts = db.Column(db.DateTime(timezone=True), default=lambda:datetime.now(timezone.utc))
     exit_ts = db.Column(db.DateTime(timezone=True))
     user = db.relationship("User", backref = "reservations")
     spot = db.relationship("ParkingSpot", backref = "reservations")
+    vehicle = db.relationship("Vehicle", backref="reservations")
 
 class Vehicle(db.Model):
     __tablename__ = "Vehicle"

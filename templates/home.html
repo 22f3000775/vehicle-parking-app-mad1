@@ -1,39 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spot On!</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+    }
 
-    <title>Document</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    .navbar {
+      background-color: #1f2b3d;
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-circle {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 2px solid white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 24px;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+
+    .content-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 3rem 6rem;
+    }
+
+    .left-content h1 {
+      font-size: 64px;
+      font-weight: 800;
+      color: #1f2b3d;
+    }
+
+    .left-content h2 {
+      font-size: 64px;
+      font-weight: 800;
+      color: #1f2b3d;
+      margin-top: -20px;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    .find-button {
+      padding: 10px 25px;
+      background-color: #1f2b3d;
+      color: white;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 5px;
+      border: 2px solid #1f2b3d;
+    }
+
+    .find-button:hover {
+      background-color: white;
+      color: #1f2b3d;
+    }
+
+    .illustration-img {
+      width: 480px;
+      max-width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .content-wrapper {
+        flex-direction: column;
+        padding: 2rem;
+        text-align: center;
+      }
+
+      .illustration-img {
+        margin-top: 2rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <header>
     <nav class="navbar">
       <div class="logo">
-        <div class="logo-circle">
-          <span class="logo-letter">P</span>
-        </div>
+        <div class="logo-circle">P</div>
       </div>
       <div class="nav-links">
         
-        <a href="routes_bp.login.html">Login</a>
-        <span class="nav-divider">|</span>
-        <a href="routes_bp.register.html">Register</a>
+        <a href="{{ url_for('routes_bp.login') }}">Login</a>
+        <span>|</span>
+        <a href="{{ url_for('routes_bp.register') }}">Register</a>
       </div>
     </nav>
-    <div class="banner"></div>
   </header>
+
   <div class="content-wrapper">
     <div class="left-content">
       <h1>SPOT</h1>
       <h2>ON!</h2>
       <div class="subtitle">Spot On! Stress Off!</div>
-      <a class="find-button" href="login.html">Find My Spot</a>
+      <a class="find-button" href="{{ url_for('routes_bp.login') }}">Find My Spot</a>
     </div>
     <div class="right-content">
-      <img class="illustration-img" src="https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/images/84816787/74d7ecd7-af99-4fc7-b38e-2b4453424434/image.jpg" alt="Parking Illustration">
+      <img
+        class="illustration-img"
+        src="https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/images/84816787/74d7ecd7-af99-4fc7-b38e-2b4453424434/image.jpg"
+        alt="Parking Illustration"
+      />
     </div>
   </div>
 </body>
