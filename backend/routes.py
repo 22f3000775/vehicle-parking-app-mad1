@@ -167,7 +167,6 @@ def create_lot():
     db.session.add(new_lot)
     db.session.commit()
 
-    # Optional: Auto-generate parking spots for this lot
     for i in range(new_lot.no_of_spots):
         spot = ParkingSpot(
             lot_id=new_lot.id,
