@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>User Dashboard - Parking History</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Roboto or your preferred font -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500" rel="stylesheet" />
+    <style>
+        body {
+            background: #f0f4f8;
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            background: #243850;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            color: #fff;
+            box-shadow: 0 2px 8px #e2e8f0;
+        }
+        .navbar-title {
+            font-size: 1.6em;
+            font-weight: 500;
+        }
+        .nav-buttons {
+            margin-left: auto;
+            display: flex;
+            gap: 18px;
+        }
+        .dashboard-btn {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 22px;
+            font-size: 1em;
+            cursor: pointer;
+            letter-spacing: 0.8px;
+            transition: background 0.2s;
+        }
+        .dashboard-btn:hover,
+        .dashboard-btn.active {
+            background: #0d47a1;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 32px auto;
+            padding: 0 24px;
+            position: relative;
+        }
+        .return-dashboard-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: #243850;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            letter-spacing: 0.7px;
+            transition: background-color 0.3s ease;
+            margin-top: 8px;
+        }
+        .return-dashboard-btn:hover {
+            background-color: #243850;
+        }
+        .history-card {
+            background: #f7faff;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px #e2e8f0;
+            padding: 32px 24px;
+            margin-top: 48px; /* to not collide with button */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 18px;
+        }
+        th,
+        td {
+            padding: 12px;
+            font-size: 1em;
+            text-align: center;
+        }
+        th {
+            background: #243850;
+            color: white;
+            font-weight: 500;
+        }
+        tr:nth-child(even) {
+            background: #eef2f7;
+        }
+        tr:nth-child(odd) {
+            background: #ffffff;
+        }
+        @media (max-width: 700px) {
+            .container,
+            .history-card {
+                padding: 8px;
+            }
+            table,
+            th,
+            td {
+                font-size: 0.85em;
+                padding: 6px;
+            }
+            .return-dashboard-btn {
+                position: static;
+                width: 100%;
+                margin-bottom: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <span class="navbar-title">User Dashboard</span>
+        <div class="nav-buttons">
+            
+        </div>
+    </div>
+    <div class="container">
+        <button onclick="window.location.href='/user/dashboard'" class="return-dashboard-btn">
+            Return to Dashboard
+        </button>
+        <h2 style="margin-left:8px;">My Parking History</h2>
+        <div class="history-card">
+            {% if reservations %}
+            <table>
+                <tr>
+                    <th>Spot</th>
+                    <th>Lot</th>
+                    <th>Vehicle</th>
+                    <th>Entry Time</th>
+                    <th>Exit Time</th>
+                    <th>Status</th>
+                    <th>Duration (min)</th>
+                    <th>Cost</th>
+                </tr>
+                {% for r in reservations %}
+                <tr>
+                    <td>{{ r.spot.spot_number }}</td>
+                    <td>{{ r.spot.lot.address }}</td>
+                    <td>{% if r.vehicle %}{{ r.vehicle.vehicle_number }}{% else %}-{% endif %}</td>
+                    <td>{% if r.entry_ts %}{{ r.entry_ts.strftime('%Y-%m-%d %H:%M') }}{% else %}-{% endif %}</td>
+                    <td>
+                        {% if r.exit_ts %}
+                            {{ r.exit_ts.strftime('%Y-%m-%d %H:%M') }}
+                        {% elif r.entry_ts %}
+                            Active
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ r.status }}</td>
+                    <td>
+                        {% if r.entry_ts and r.exit_ts %}
+                            {% set duration = ((r.exit_ts - r.entry_ts).total_seconds() // 60)|int %}
+                            {{ duration if duration >= 0 else 0 }}
+                        {% elif r.entry_ts %}
+                            Active
+                        {% else %}
+                            -
+                        {% endif %}
+
+                    </td>
+                    
+                    <td>&#8377; {{ ('%.2f'|format(r.cost)) }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <p style="color:#333; font-size:1.1em; text-align:center;">No parking history found.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

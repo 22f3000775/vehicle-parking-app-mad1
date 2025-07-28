@@ -104,7 +104,7 @@
     .dashboard-panels {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 24px;
     }
 
     .panel {
@@ -138,21 +138,43 @@
       letter-spacing: normal;
       font-size: 1rem;
     }
-    .booking-card form {
+
+    /* Booking item style inside panels */
+    .booking-item {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+      background: white;
+      box-shadow: 1px 1px 4px #d7e0f4;
+    }
+
+    .booking-item form {
       margin-top: 10px;
     }
-    .booking-card button[type="submit"] {
+    .booking-item button[type="submit"] {
       font-size: 1rem;
       padding: 8px 22px;
       border-radius: 20px;
-      background: #223456;
-      color: #fff;
       border: none;
       cursor: pointer;
       transition: background 0.2s;
     }
-    .booking-card button[type="submit"]:hover {
+    /* End Booking button */
+    .booking-item button.end-booking-btn {
+      background: #223456;
+      color: #fff;
+    }
+    .booking-item button.end-booking-btn:hover {
       background: #2e4976;
+    }
+    /* Cancel Booking button */
+    .booking-item button.cancel-booking-btn {
+      background: #e53935;
+      color: white;
+    }
+    .booking-item button.cancel-booking-btn:hover {
+      background: #b71c1c;
     }
 
     .sidebar-buttons {
@@ -252,6 +274,7 @@
       font-weight: bold;
     }
 
+
     @media (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -271,6 +294,7 @@
 </head>
 <body>
 
+
   <!-- ✅ TOP NAVBAR -->
   <div class="navbar">
     <div class="logo-circle">P</div>
@@ -289,6 +313,7 @@
     </div>
   </div>
 
+
   <!-- ✅ DASHBOARD CONTENT -->
   <div class="container">
     <!-- Main Dashboard Actions -->
@@ -296,25 +321,50 @@
       <div class="welcome-text">WELCOME {{ current_user.name.upper() }}!</div>
 
       <div class="dashboard-panels">
-        {% if active_bookings %}
-          {% for booking in active_bookings %}
-            <div class="panel booking-card">
-              <h3>Vehicle: {{ booking.vehicle.vehicle_type }} - {{ booking.vehicle.vehicle_number }}</h3>
-              <p><strong>Parking Lot:</strong> {{ booking.spot.lot.address }}</p>
-              <p><strong>Spot Number:</strong> {{ booking.spot.spot_number }}</p>
-              <p>
-                <strong>Start Time:</strong> {{ booking.entry_ts.strftime('%Y-%m-%d %H:%M') }}
-                &nbsp;–&nbsp;
-                <strong>End Time:</strong> {{ booking.exit_ts.strftime('%Y-%m-%d %H:%M') }}
-              </p>
-              <form method="POST" action="{{ url_for('routes_bp.end_booking', booking_id=booking.id) }}">
-                <button type="submit">End Booking</button>
-              </form>
-            </div>
-          {% endfor %}
-        {% else %}
-          <p>No active bookings.</p>
-        {% endif %}
+
+        <!-- Active Bookings Section -->
+        <div class="panel booking-card">
+          <h3>Active Bookings</h3>
+          {% if active_bookings %}
+            {% for booking in active_bookings %}
+              <div class="booking-item">
+                <p><strong>Vehicle:</strong> {{ booking.vehicle.vehicle_type }} - {{ booking.vehicle.vehicle_number }}</p>
+                <p><strong>Parking Lot:</strong> {{ booking.spot.lot.address }}</p>
+                <p><strong>Spot Number:</strong> {{ booking.spot.spot_number }}</p>
+                <p><strong>Start Time:</strong> {{ booking.entry_ts.strftime('%Y-%m-%d %H:%M') }}</p>
+                <p><strong>End Time:</strong> 
+                  {% if booking.exit_ts %}{{ booking.exit_ts.strftime('%Y-%m-%d %H:%M') }}{% else %}Ongoing{% endif %}
+                </p>
+                <form method="POST" action="{{ url_for('routes_bp.end_booking', booking_id=booking.id) }}">
+                  <button type="submit" class="end-booking-btn">End Booking</button>
+                </form>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p>No active bookings.</p>
+          {% endif %}
+        </div>
+
+        <!-- Scheduled Bookings Section -->
+        <div class="panel booking-card" style="margin-top: 2em;">
+          <h3>Scheduled Bookings</h3>
+          {% if scheduled_bookings %}
+            {% for booking in scheduled_bookings %}
+              <div class="booking-item">
+                <p><strong>Vehicle:</strong> {{ booking.vehicle.vehicle_type }} - {{ booking.vehicle.vehicle_number }}</p>
+                <p><strong>Parking Lot:</strong> {{ booking.spot.lot.address }}</p>
+                <p><strong>Spot Number:</strong> {{ booking.spot.spot_number }}</p>
+                <p><strong>Start Time:</strong> {{ booking.entry_ts.strftime('%Y-%m-%d %H:%M') }}</p>
+                <p><strong>End Time:</strong> {{ booking.exit_ts.strftime('%Y-%m-%d %H:%M') }}</p>
+                <form method="POST" action="{{ url_for('routes_bp.cancel_reservation', res_id=booking.id) }}" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                  <button type="submit" class="cancel-booking-btn">Cancel Booking</button>
+                </form>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p>No scheduled bookings.</p>
+          {% endif %}
+        </div>
 
         {% if notifications %}
           <div class="panel">
@@ -335,11 +385,11 @@
         Book a Spot
       </button>
 
-     
-      <button class="sidebar-button">
+      <button class="sidebar-button" onclick="window.location.href='/user/history'">
         <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z M6 6h12v2H6z M6 10h12v2H6z M6 14h8v2H6z"/></svg>
         History
       </button>
+
       <button class="sidebar-button">
         <svg viewBox="0 0 24 24"><path d="M6 4v17l6-5 6 5V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2z"/></svg>
         Saved

@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from .models import db, User, Admin, ParkingLot, ParkingSpot, Reservation, Vehicle
 from flask_login import login_user, login_required, current_user, logout_user
 from datetime import datetime, timezone, timedelta
+datetime.now(timezone.utc) 
 
 
 routes_bp = Blueprint("routes_bp", __name__, template_folder="../templates")
@@ -248,6 +249,54 @@ def delete_lot(lot_id):
     flash(f"Parking lot '{lot.location}' deleted successfully.", "success")
     return redirect(url_for("routes_bp.admin_lots"))
 
+@routes_bp.route('/admin/occupied_spots')
+@login_required
+def occupied_spots():
+    # Query all spots with status 'occupied'
+    occupied_spots = ParkingSpot.query.filter_by(status='occupied').all()
+    now = datetime.now(timezone.utc)
+
+    spot_details = []
+    for spot in occupied_spots:
+        # Query the active reservation - Ideally status='Active'
+        reservation = (
+            Reservation.query
+            .filter_by(spot_id=spot.id, status='Active')
+            .order_by(Reservation.entry_ts.desc())
+            .first()
+        )
+        if reservation:
+            # If exit_ts is present, booked_duration = exit_ts - entry_ts
+            # else show "Ongoing"
+            if reservation.exit_ts:
+                duration_td = reservation.exit_ts - reservation.entry_ts
+                duration_mins = int(duration_td.total_seconds() // 60)
+                cost = reservation.cost
+                entry_time = reservation.entry_ts.strftime("%Y-%m-%d %H:%M")
+                exit_time = reservation.exit_ts.strftime("%Y-%m-%d %H:%M")
+            else:
+                # Ongoing booking - you can decide to show "Ongoing" or calculate till now
+                duration_td = now - reservation.entry_ts
+                duration_mins = int(duration_td.total_seconds() // 60)
+                # Optionally calculate partial cost till now:
+                cost = reservation.cost  # if accumulating cost live, else "N/A"
+                entry_time = reservation.entry_ts.strftime("%Y-%m-%d %H:%M")
+                exit_time = "Ongoing"
+
+            spot_details.append({
+                'spot_number': spot.spot_number,
+                'lot_name': spot.lot.location,
+                'user_name': reservation.user.name,
+                'vehicle_type': reservation.vehicle.vehicle_type if reservation.vehicle else 'N/A',
+                'vehicle_number': reservation.vehicle.vehicle_number if reservation.vehicle else 'N/A',
+                'entry_ts': entry_time,
+                'exit_ts': exit_time,
+                'duration_mins': duration_mins,
+                'cost': cost
+            })
+
+    return render_template('admin_occupied_spots.html', spot_details=spot_details)
+
 @routes_bp.route('/admin/analytics')
 @login_required
 def admin_analytics():
@@ -298,15 +347,41 @@ def user_dashboard():
     lots = ParkingLot.query.all()
     locations_query = db.session.query(ParkingLot.location).distinct().all()
     locations = [loc[0] for loc in locations_query]
-
+    
+    now = datetime.now(timezone.utc)
+    active_bookings = (
+        Reservation.query
+        .filter(
+            Reservation.user_id == current_user.id,
+            Reservation.status == 'Active',  # or your active status indicator
+            Reservation.entry_ts <= now,
+            (Reservation.exit_ts == None) | (Reservation.exit_ts > now)
+        )
+        .order_by(Reservation.entry_ts.asc())
+        .all()
+    )
+    
+    # Scheduled bookings: where entry_ts is in future (has not started)
+    scheduled_bookings = (
+        Reservation.query
+        .filter(
+            Reservation.user_id == current_user.id,
+            Reservation.status == 'Active',  
+            Reservation.entry_ts > now
+        )
+        .order_by(Reservation.entry_ts.asc())
+        .all()
+    )
     return render_template("user/dashboard.html",
                            current_user=current_user,
-                           active_bookings=active_bookings,
                            inactive_bookings=inactive_bookings,
                            current_booking=current_booking,
                            locations=locations,
                            saved_spots=saved_spots,
-                           parking_lots=lots)  
+                           parking_lots=lots,
+                           active_bookings=active_bookings, 
+                           scheduled_bookings=scheduled_bookings
+                           )  
 
 
 
@@ -402,6 +477,53 @@ def end_booking(booking_id):
     db.session.commit()
     flash("Booking ended successfully.", "success")
     return redirect(url_for('routes_bp.user_dashboard'))
+
+
+
+@routes_bp.route('/user/history')
+@login_required
+def user_history():
+    # Fetch reservations, order latest first
+    reservations = (
+        Reservation.query
+        .filter_by(user_id=current_user.id)
+        .order_by(Reservation.entry_ts.desc())
+        .all()
+    )
+
+    return render_template('user/user_history.html', reservations=reservations)
+
+
+
+@routes_bp.route('/reservation/<int:res_id>/cancel', methods=['POST'])
+@login_required
+def cancel_reservation(res_id):
+    reservation = Reservation.query.filter_by(id=res_id, user_id=current_user.id).first()
+
+    if not reservation:
+        flash("Reservation not found.", "error")
+        return redirect(url_for('routes_bp.user_history'))
+
+    entry_time = reservation.entry_ts
+    if entry_time.tzinfo is None:
+        entry_time = entry_time.replace(tzinfo=timezone.utc)
+
+    if entry_time <= datetime.now(timezone.utc):
+        flash("Cannot cancel booking that has already started or ended.", "error")
+        return redirect(url_for('routes_bp.user_history'))
+
+    # Cancel the reservation
+    reservation.status = 'Cancelled'
+    reservation.exit_ts = datetime.now(timezone.utc)
+    reservation.cost = 0
+    reservation.spot.status = 'Free'
+
+    db.session.commit()
+    flash("Booking cancelled successfully.", "success")
+    return redirect(url_for('routes_bp.user_history'))
+
+    
+
 
 
 
