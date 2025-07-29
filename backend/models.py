@@ -1,7 +1,10 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime,timezone
 from flask_login import UserMixin
+from datetime import datetime, timezone, timedelta
 
+ 
+IST = timezone(timedelta(hours=0, minutes=0))
 db = SQLAlchemy()
 
 class Admin(db.Model, UserMixin):
@@ -54,7 +57,7 @@ class Reservation(db.Model):
     vehicle_id = db.Column(db.Integer, db.ForeignKey("Vehicle.id"), nullable=True)
     status = db.Column(db.String, nullable = False)
     cost = db.Column(db.Numeric(10, 2), nullable=False)
-    entry_ts = db.Column(db.DateTime(timezone=True), default=lambda:datetime.now(timezone.utc))
+    entry_ts = db.Column(db.DateTime(timezone=True), default=lambda:datetime.now(IST))
     exit_ts = db.Column(db.DateTime(timezone=True))
     user = db.relationship("User", backref = "reservations")
     spot = db.relationship("ParkingSpot", backref = "reservations")

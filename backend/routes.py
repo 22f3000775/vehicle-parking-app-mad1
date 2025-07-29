@@ -1,9 +1,11 @@
-# backend/routes.py
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
 from .models import db, User, Admin, ParkingLot, ParkingSpot, Reservation, Vehicle
 from flask_login import login_user, login_required, current_user, logout_user
 from datetime import datetime, timezone, timedelta
-datetime.now(timezone.utc) 
+from sqlalchemy import or_
+from sqlalchemy.exc import OperationalError
+
+IST = timezone(timedelta(hours=5, minutes=30))
 
 
 routes_bp = Blueprint("routes_bp", __name__, template_folder="../templates")
@@ -75,9 +77,6 @@ def register():
     return redirect("/login")
 
 
-
-
-
 @routes_bp.route("/admin/dashboard", methods=["GET", "POST"])
 @login_required
 def admin_dashboard():
@@ -86,10 +85,9 @@ def admin_dashboard():
     
     lot_count = db.session.query(ParkingLot).count()
     total_spots = db.session.query(ParkingSpot).count()
-    occupied_spots = db.session.query(ParkingSpot).filter_by(status="Occupied").count()
-
-    occupancy = round((occupied_spots / total_spots) * 100, 2) if total_spots else 0
     occupied_spot_count = ParkingSpot.query.filter_by(status='Occupied').count()
+    occupancy = round((occupied_spot_count / total_spots) * 100, 2) if total_spots else 0
+    
     
 
     return render_template("admin/dashboard.html",
@@ -99,28 +97,6 @@ def admin_dashboard():
                            occupancy=occupancy,
                            occupied_spot_count=occupied_spot_count,
                            )
-
-@routes_bp.route("/admin/occupied-spots")
-@login_required
-def view_occupied_spots():
-    # Fetch only spots that are currently occupied
-    occupied_spots = ParkingSpot.query.filter_by(status='Occupied').all()
-
-    active_reservations = []
-    for spot in occupied_spots:
-        reservation = Reservation.query.filter_by(spot_id=spot.id).order_by(Reservation.entry_ts.desc()).first()
-        if reservation and reservation.exit_ts is None:
-            active_reservations.append({
-                "spot": spot,
-                "reservation": reservation,
-                "vehicle": reservation.vehicle,
-                "user": reservation.user,
-                "lot": spot.lot
-            })
-
-    return render_template("admin/occupied_spots.html", reservations=active_reservations)
-
-
 
 @routes_bp.route("/admin/users", methods=["GET"])
 @login_required
@@ -136,17 +112,18 @@ def admin_lots():
     lot_data = []
     for lot in lots:
         total_spots = lot.no_of_spots
+        address = lot.address
         occupied_spots = ParkingSpot.query.filter_by(lot_id=lot.id, status="Occupied").count()
         lot_data.append({
             "id": lot.id,
             "name": f"Lot {lot.id}",
             "total_spots": total_spots,
-            "occupied_spots": occupied_spots
+            "occupied_spots": occupied_spots,
+            "address": address
         })
 
     return render_template("admin/parking_lots.html", lot_data=lot_data)
 
-# Create New Lot (via modal)
 @routes_bp.route("/admin/lots/create", methods=["POST"])
 @login_required
 def create_lot():
@@ -200,12 +177,11 @@ def edit_lot(lot_id):
     lot.no_of_spots = new_no_of_spots
     db.session.commit()
 
-    # Adjust associated parking spots:
     current_spots = ParkingSpot.query.filter_by(lot_id=lot.id).order_by(ParkingSpot.spot_number).all()
     current_spot_count = len(current_spots)
 
     if new_no_of_spots > current_spot_count:
-        # Add new available spots
+    
         for i in range(current_spot_count, new_no_of_spots):
             spot = ParkingSpot(
                 lot_id=lot.id,
@@ -214,16 +190,14 @@ def edit_lot(lot_id):
             )
             db.session.add(spot)
     elif new_no_of_spots < current_spot_count:
-        # Remove spots beyond new number if they are Available
+  
         spots_to_remove = current_spots[new_no_of_spots:]
         for spot in spots_to_remove:
             if spot.status == "Available":
                 db.session.delete(spot)
             else:
                 flash(f"Cannot remove spot {spot.spot_number} as it is occupied.", "warning")
-                # Optionally, abort or skip removal
-        # If you want, you can decide to block reducing spots if any are occupied
-
+  
     db.session.commit()
     flash(f"Number of spots for lot '{lot.location}' updated successfully.", "success")
     return redirect(url_for("routes_bp.admin_lots"))
@@ -233,74 +207,61 @@ def edit_lot(lot_id):
 def delete_lot(lot_id):
     lot = ParkingLot.query.get_or_404(lot_id)
 
-    # Check if there are any occupied spots before deleting
     occupied_spots = ParkingSpot.query.filter_by(lot_id=lot.id, status="Occupied").count()
     if occupied_spots > 0:
         flash("Cannot delete lot with occupied spots.", "danger")
         return redirect(url_for("routes_bp.admin_lots"))
 
-    # Delete all associated spots first
     ParkingSpot.query.filter_by(lot_id=lot.id).delete()
 
-    # Then delete the lot itself
     db.session.delete(lot)
     db.session.commit()
 
     flash(f"Parking lot '{lot.location}' deleted successfully.", "success")
     return redirect(url_for("routes_bp.admin_lots"))
 
-@routes_bp.route('/admin/occupied_spots')
+@routes_bp.route('/occupied_spot_details', methods = ["GET", "POST"])
 @login_required
-def occupied_spots():
-    # Query all spots with status 'occupied'
-    occupied_spots = ParkingSpot.query.filter_by(status='occupied').all()
-    now = datetime.now(timezone.utc)
+def occupied_spot_details():
+    now = datetime.now(IST)
+    
+    occupied_reservations = Reservation.query.filter_by(user_id=current_user.id, status="Active").all()
 
     spot_details = []
-    for spot in occupied_spots:
-        # Query the active reservation - Ideally status='Active'
-        reservation = (
-            Reservation.query
-            .filter_by(spot_id=spot.id, status='Active')
-            .order_by(Reservation.entry_ts.desc())
-            .first()
-        )
-        if reservation:
-            # If exit_ts is present, booked_duration = exit_ts - entry_ts
-            # else show "Ongoing"
-            if reservation.exit_ts:
-                duration_td = reservation.exit_ts - reservation.entry_ts
-                duration_mins = int(duration_td.total_seconds() // 60)
-                cost = reservation.cost
-                entry_time = reservation.entry_ts.strftime("%Y-%m-%d %H:%M")
-                exit_time = reservation.exit_ts.strftime("%Y-%m-%d %H:%M")
-            else:
-                # Ongoing booking - you can decide to show "Ongoing" or calculate till now
-                duration_td = now - reservation.entry_ts
-                duration_mins = int(duration_td.total_seconds() // 60)
-                # Optionally calculate partial cost till now:
-                cost = reservation.cost  # if accumulating cost live, else "N/A"
-                entry_time = reservation.entry_ts.strftime("%Y-%m-%d %H:%M")
-                exit_time = "Ongoing"
+    for res in occupied_reservations:
+        spot = res.spot
+        lot = spot.lot if spot else None
+        user = res.user
+        vehicle = res.vehicle
 
-            spot_details.append({
-                'spot_number': spot.spot_number,
-                'lot_name': spot.lot.location,
-                'user_name': reservation.user.name,
-                'vehicle_type': reservation.vehicle.vehicle_type if reservation.vehicle else 'N/A',
-                'vehicle_number': reservation.vehicle.vehicle_number if reservation.vehicle else 'N/A',
-                'entry_ts': entry_time,
-                'exit_ts': exit_time,
-                'duration_mins': duration_mins,
-                'cost': cost
-            })
+        entry_time = res.entry_ts.strftime("%Y-%m-%d %H:%M")
+        exit_time = res.exit_ts.strftime("%Y-%m-%d %H:%M") if res.exit_ts else 'Ongoing'
+        if res.exit_ts:
+            duration = int((res.exit_ts - res.entry_ts).total_seconds() // 60)
+        else:
+            duration = int((now - res.entry_ts).total_seconds() // 60)
+        cost = res.cost if res.cost is not None else 'N/A'
 
-    return render_template('admin_occupied_spots.html', spot_details=spot_details)
+        spot_details.append({
+            'spot_number': spot.spot_number if spot else 'N/A',
+            'lot_name': lot.address if lot else 'N/A',
+            'user_name': user.name if user else 'N/A',
+            'vehicle_type': vehicle.vehicle_type if vehicle else 'N/A',
+            'vehicle_number': vehicle.vehicle_number if vehicle else 'N/A',
+            'entry_ts': entry_time,
+            'exit_ts': exit_time,
+            'duration_mins': duration,
+            'cost': cost
+        })
 
-@routes_bp.route('/admin/analytics')
+    return render_template('admin/occupied_spots.html', spot_details=spot_details)
+
+
+@routes_bp.route('/admin/analytics', methods = ["GET", "POST"])
 @login_required
 def admin_analytics():
-   
+    now = datetime.now(IST)
+
     parking_lots = ParkingLot.query.all()
 
     lots_data = []
@@ -317,73 +278,128 @@ def admin_analytics():
             'updated_at': getattr(lot, 'updated_at', None),
         })
 
-    from sqlalchemy import func
+    active_count = Reservation.query.filter(
+        Reservation.status == "Active",
+        Reservation.entry_ts <= now,
+        Reservation.exit_ts == None
+    ).count()
+
+
+    scheduled_count = Reservation.query.filter(
+        Reservation.status == 'Scheduled',
+        Reservation.entry_ts > now
+    ).count()
+
+    
+    active_reservations = Reservation.query.filter(
+        Reservation.status == "Active",
+        Reservation.entry_ts <= now,
+        Reservation.exit_ts == None
+    ).all()
+
+
+    total_revenue = 0
+    for res in active_reservations:
+        price_per_hour = res.spot.lot.price  
+        end_time = res.exit_ts or now
+        duration_seconds = (end_time - res.entry_ts).total_seconds()
+        duration_hours = max(duration_seconds / 3600, 0)
+        total_revenue += price_per_hour * duration_hours
 
     total_lots_created = len(parking_lots)
-    total_reservations = Reservation.query.count()
-    avg_duration = db.session.query(func.avg(func.julianday(Reservation.exit_ts) - func.julianday(Reservation.entry_ts))).scalar()
-    total_revenue = db.session.query(func.sum(Reservation.cost)).scalar()
 
-    return render_template('admin/analytics.html',
-                           lots_data=lots_data,
-                           total_lots_created=total_lots_created,
-                           total_reservations=total_reservations,
-                           avg_duration=avg_duration,
-                           total_revenue=total_revenue)
+   
+    total_reservations = Reservation.query.filter(
+        Reservation.status.in_(['Active', 'Scheduled'])
+    ).count()
+
+    return render_template(
+        'admin/analytics.html',
+        lots_data=lots_data,
+        total_lots_created=total_lots_created,
+        total_reservations=total_reservations,
+        active_count=active_count,
+        scheduled_count=scheduled_count,
+        total_revenue=total_revenue
+    )
+
+
+@routes_bp.route('/admin/all_parking_records', methods=['GET'])
+@login_required
+def all_parking_records():
+   
+    reservations = Reservation.query.order_by(Reservation.entry_ts.desc()).all()
+
+    records = []
+    for res in reservations:
+        user = res.user
+        vehicle = res.vehicle
+        lot = res.spot.lot
+        spot = res.spot
+
+        entry = res.entry_ts.astimezone(IST) if res.entry_ts else None
+        exit_ = res.exit_ts.astimezone(IST) if res.exit_ts else None
+        duration_hours = None
+
+        if entry and exit_:
+            duration_seconds = (exit_ - entry).total_seconds()
+            duration_hours = round(duration_seconds / 3600, 2)
+
+        records.append({
+            "user_name": user.name,
+            "user_email": user.email,
+            "vehicle_number": vehicle.vehicle_number if vehicle else "N/A",
+            "lot_address": lot.address,
+            "spot_id": spot.id,
+            "entry_ts": entry.strftime('%Y-%m-%d %H:%M:%S') if entry else "N/A",
+            "exit_ts": exit_.strftime('%Y-%m-%d %H:%M:%S') if exit_ else "N/A",
+            "duration": f"{duration_hours} hrs" if duration_hours else "N/A",
+            "cost": f"₹{res.cost:.2f}" if res.cost else "₹0.00",
+            "status": res.status,
+        })
+
+    return render_template('admin/all_parking_records.html', records=records)
 
 
 @routes_bp.route("/user/dashboard", methods=["GET", "POST"])
 @login_required
 def user_dashboard():
+    expire_old_reservations()
+
     active_bookings = Reservation.query.filter_by(user_id=current_user.id, status="Active").all()
     inactive_bookings = Reservation.query.filter_by(user_id=current_user.id, status="Inactive").all()
     parking_lots = ParkingLot.query.all()
 
-    now = datetime.now(timezone.utc)
-    current_booking = Reservation.query.filter_by(user_id=current_user.id, status="Active") \
-        .filter(Reservation.exit_ts >= now).first()
-
-    saved_spots = []
-    lots = ParkingLot.query.all()
-    locations_query = db.session.query(ParkingLot.location).distinct().all()
-    locations = [loc[0] for loc in locations_query]
+    now = datetime.now(IST)
     
-    now = datetime.now(timezone.utc)
-    active_bookings = (
-        Reservation.query
-        .filter(
-            Reservation.user_id == current_user.id,
-            Reservation.status == 'Active',  # or your active status indicator
-            Reservation.entry_ts <= now,
-            (Reservation.exit_ts == None) | (Reservation.exit_ts > now)
-        )
-        .order_by(Reservation.entry_ts.asc())
-        .all()
-    )
-    
-    # Scheduled bookings: where entry_ts is in future (has not started)
+        
     scheduled_bookings = (
         Reservation.query
         .filter(
             Reservation.user_id == current_user.id,
-            Reservation.status == 'Active',  
+            Reservation.status == 'Scheduled',
             Reservation.entry_ts > now
         )
         .order_by(Reservation.entry_ts.asc())
         .all()
     )
-    return render_template("user/dashboard.html",
-                           current_user=current_user,
-                           inactive_bookings=inactive_bookings,
-                           current_booking=current_booking,
-                           locations=locations,
-                           saved_spots=saved_spots,
-                           parking_lots=lots,
-                           active_bookings=active_bookings, 
-                           scheduled_bookings=scheduled_bookings
-                           )  
-
-
+    
+    inactive_bookings = Reservation.query.filter_by(user_id=current_user.id, status="Inactive").all()
+    
+    locations_query = db.session.query(ParkingLot.location).distinct().all()
+    locations = [loc[0] for loc in locations_query]
+    
+    lots = ParkingLot.query.all()
+      
+    return render_template(
+        "user/dashboard.html",
+        current_user=current_user,
+        active_bookings=active_bookings,
+        scheduled_bookings=scheduled_bookings,
+        inactive_bookings=inactive_bookings,
+        locations=locations,
+        parking_lots=lots
+    )
 
 @routes_bp.route('/user/book/location/<location>')
 @login_required
@@ -402,7 +418,8 @@ def spot_booking_location(location):
         vehicles=vehicles,
     )
 
-
+from pytz import timezone
+IST = timezone('Asia/Kolkata')
 
 @routes_bp.route('/user/book/<int:lot_id>', methods=['POST'])
 @login_required
@@ -419,45 +436,62 @@ def spot_booking(lot_id):
         flash("All booking fields are required.", "danger")
         return redirect(url_for('routes_bp.spot_booking_location', location=lot.location))
 
-    # Check if vehicle exists or create new
-    vehicle = Vehicle.query.filter_by(user_id=current_user.id, vehicle_number=vehicle_number).first()
-    if not vehicle:
-        vehicle = Vehicle(user_id=current_user.id, vehicle_type=vehicle_type, vehicle_number=vehicle_number)
-        db.session.add(vehicle)
-        db.session.commit()
+    try:
+        vehicle = Vehicle.query.filter_by(user_id=current_user.id, vehicle_number=vehicle_number).first()
+        if not vehicle:
+            vehicle = Vehicle(user_id=current_user.id, vehicle_type=vehicle_type, vehicle_number=vehicle_number)
+            db.session.add(vehicle)
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash("Vehicle entry failed. Try again.", "danger")
+        print("Vehicle insert error:", e)
+        return redirect(url_for('routes_bp.spot_booking_location', location=lot.location))
 
-    # Find the first available parking spot in this lot
     spot = ParkingSpot.query.filter_by(lot_id=lot_id, status="Available").order_by(ParkingSpot.id).first()
     if not spot:
         flash("No spots available in this lot.", "danger")
         return redirect(url_for('routes_bp.spot_booking_location', location=lot.location))
 
-    # Calculate booking datetime range
     try:
         start_datetime = datetime.strptime(f"{booking_date} {booking_time}", "%Y-%m-%d %H:%M")
+        start_datetime = start_datetime.astimezone(IST)
     except ValueError:
         flash("Invalid date or time format.", "danger")
         return redirect(url_for('routes_bp.spot_booking_location', location=lot.location))
 
     end_datetime = start_datetime + timedelta(hours=booking_duration)
+    now = datetime.now(IST)
 
-    # Assign spot and create reservation
-    spot.status = "Occupied"
+    if start_datetime > now:
+        reservation_status = "Scheduled"
+        spot.status = "Booked"
+    else:
+        reservation_status = "Active"
+        spot.status = "Occupied"
 
-    new_reservation = Reservation(
-        spot_id=spot.id,
-        user_id=current_user.id,
-        status="Active",
-        cost=lot.price * booking_duration,
-        vehicle_id=vehicle.id,
-        entry_ts=start_datetime,
-        exit_ts=end_datetime,
-    )
-    db.session.add(new_reservation)
-    db.session.commit()
+    
+    try:
+        new_reservation = Reservation(
+            spot_id=spot.id,
+            user_id=current_user.id,
+            status=reservation_status,
+            cost=lot.price * booking_duration,
+            vehicle_id=vehicle.id,
+            entry_ts=start_datetime.now(IST),
+            exit_ts=end_datetime,
+        )
+        db.session.add(new_reservation)
+        db.session.add(spot) 
+        db.session.commit()
+        flash(f"Booking successful! Spot {spot.spot_number} assigned.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("Failed to book the spot. Try again.", "danger")
+        print("Reservation insert error:", e)
 
-    flash(f"Booking successful! Spot {spot.spot_number} assigned.", "success")
     return redirect(url_for('routes_bp.user_dashboard'))
+
 
 @routes_bp.route('/booking/end/<int:booking_id>', methods=['POST'])
 @login_required
@@ -468,7 +502,7 @@ def end_booking(booking_id):
         return redirect(url_for('routes_bp.user_dashboard'))
 
     booking.status = "Ended"
-    booking.exit_ts = datetime.now(timezone.utc)
+    booking.exit_ts = datetime.now(IST)
 
     spot = ParkingSpot.query.get(booking.spot_id)
     if spot:
@@ -478,21 +512,58 @@ def end_booking(booking_id):
     flash("Booking ended successfully.", "success")
     return redirect(url_for('routes_bp.user_dashboard'))
 
+@routes_bp.route('/booking_summary', methods=['POST'])
+def booking_summary():
+    booking_id = request.form.get('booking_id')
+    if not booking_id:
+        return jsonify({'error': 'Booking ID missing'}), 400
+    booking = Reservation.query.get(booking_id)
+    if not booking or booking.status != 'Active':
+        return jsonify({'error': 'Invalid or inactive booking.'}), 400
 
+    booking.end_time = datetime.now(IST)
+    if booking.entry_ts.tzinfo is None:
+        booking.entry_ts = IST.localize(booking.entry_ts)
+    duration_seconds = (booking.end_time - booking.entry_ts).total_seconds()
+    duration_hours = duration_seconds / 3600
+    price_per_hour = booking.spot.lot.price
+
+    booking.cost = round(duration_hours * price_per_hour, 2)
+    booking.status = 'Ended'
+    spot = booking.spot
+    spot = ParkingSpot.query.get(booking.spot_id)
+    if spot:
+        spot.status = "Available"
+    else:
+        print("Spot not found for booking ID:", booking.id)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        print("Commit failed:", e)
+        db.session.rollback()
+
+
+    summary = {
+        'start_time': booking.entry_ts.strftime('%Y-%m-%d %H:%M'),
+        'end_time': booking.end_time.strftime('%Y-%m-%d %H:%M'),
+        'duration': round(duration_hours, 2),
+        'rate': price_per_hour,
+        'cost': booking.cost
+    }
+    return jsonify(summary)
 
 @routes_bp.route('/user/history')
 @login_required
 def user_history():
-    # Fetch reservations, order latest first
+    
     reservations = (
         Reservation.query
         .filter_by(user_id=current_user.id)
         .order_by(Reservation.entry_ts.desc())
         .all()
     )
-
     return render_template('user/user_history.html', reservations=reservations)
-
 
 
 @routes_bp.route('/reservation/<int:res_id>/cancel', methods=['POST'])
@@ -506,24 +577,41 @@ def cancel_reservation(res_id):
 
     entry_time = reservation.entry_ts
     if entry_time.tzinfo is None:
-        entry_time = entry_time.replace(tzinfo=timezone.utc)
+        entry_time = entry_time.replace(tzinfo=IST)
 
-    if entry_time <= datetime.now(timezone.utc):
+    if entry_time <= datetime.now(IST):
         flash("Cannot cancel booking that has already started or ended.", "error")
         return redirect(url_for('routes_bp.user_history'))
 
-    # Cancel the reservation
     reservation.status = 'Cancelled'
-    reservation.exit_ts = datetime.now(timezone.utc)
+    reservation.exit_ts = datetime.now(IST)
     reservation.cost = 0
-    reservation.spot.status = 'Free'
+    reservation.spot.status = 'Available'
 
     db.session.commit()
     flash("Booking cancelled successfully.", "success")
     return redirect(url_for('routes_bp.user_history'))
 
     
+def expire_old_reservations():
+    try:
+        now = datetime.now(IST) 
+        expired = Reservation.query.filter(
+            Reservation.exit_ts == None,
+            Reservation.status == 'Active',
+            Reservation.exit_ts <= now
+        ).all()
 
+        for res in expired:
+            res.status = 'Expired'
+            res.exit_ts = now
+            res.spot.status = 'Available'
+
+        db.session.commit()
+
+    except Exception as e:
+        db.session.rollback()
+        print("DB rollback due to error in expire_old_reservations:", e)
 
 
 

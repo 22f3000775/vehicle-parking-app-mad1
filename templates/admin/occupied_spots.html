@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin Dashboard - Occupied Spots</title>
+  <title>Admin Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
@@ -203,8 +203,8 @@
               <td>{{ spot.user_name }}</td>
               <td>{{ spot.vehicle_type }}</td>
               <td>{{ spot.vehicle_number }}</td>
-              <td>{{ spot.entry_ts }}</td>
-              <td>{{ spot.exit_ts }}</td>
+              <td>{{ spot.entry_ts | to_ist }}</td>
+              <td>{{ spot.exit_ts | to_ist }}</td>
               <td>{{ spot.duration_mins }}</td>
               <td>{{ "%.2f"|format(spot.cost) if spot.cost is not none else 'N/A' }}</td>
             </tr>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>All Parking Records</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
+  <style>
+    /* Page base */
+    body {
+      background-color: #ffffff; /* white background */
+      color: #1f2937; /* dark text for readability */
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      margin-top: 60px;
+      width: 90%;
+      max-width: 1200px;
+    }
+
+    /* Top bar with heading and right-aligned back button */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .top-bar h2 {
+      color: #1f2937;
+      font-weight: 700;
+      font-size: 28px;
+      margin: 0;
+    }
+
+    .btn-back {
+      background-color: #1f355d;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+      user-select: none;
+      box-shadow: 0 2px 6px rgb(31 53 93 / 0.7);
+    }
+
+    .btn-back:hover {
+      background-color: #394d8f;
+      text-decoration: none;
+      color: white;
+    }
+
+    /* Table container for responsive scroll and styling */
+    .table-responsive {
+      overflow-x: auto;
+      box-shadow: 0 0 10px rgb(0 0 0 / 0.1);
+      border-radius: 10px;
+    }
+
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background-color: #f9fafb; /* very light gray - white-ish */
+      color: #1f2937; /* dark text */
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 14px;
+      box-shadow: 0 1px 8px rgb(0 0 0 / 0.15);
+    }
+
+    thead {
+      background-color: #e2e8f0; /* light grey-blue header */
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: center;
+      vertical-align: middle;
+      border-bottom: 1px solid #d1d5db;
+    }
+
+    th {
+      color: #374151; /* dark gray text */
+      font-weight: 600;
+      user-select: none;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    tbody tr:hover {
+      background-color: #e0e7ff; /* very subtle blue highlight */
+      cursor: default;
+    }
+
+    /* Status badge coloring without glow for cleaner light theme */
+    .badge {
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.85em;
+      display: inline-block;
+    }
+
+    .bg-success {
+      background-color: #198754;
+      color: white;
+      box-shadow: none;
+    }
+
+    .bg-info {
+      background-color: #0dcaf0;
+      color: #0d0920;
+      box-shadow: none;
+    }
+
+    .bg-secondary {
+      background-color: #6c757d;
+      color: white;
+      box-shadow: none;
+    }
+
+    .bg-dark {
+      background-color: #343a40;
+      color: white;
+      box-shadow: none;
+    }
+
+    /* Scrollbar styling (WebKit browsers) */
+    .table-responsive::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+      background: #ffffff;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+      background-color: #1f355d;
+      border-radius: 8px;
+      border: 2px solid #ffffff;
+    }
+
+    /* Responsive font and layout scaling */
+    @media (max-width: 768px) {
+      .top-bar h2 {
+        font-size: 24px;
+      }
+      th, td {
+        padding: 10px 8px;
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <h2>All Parking Records</h2>
+      <a href="{{ url_for('routes_bp.admin_dashboard') }}" class="btn-back">← Back to Dashboard</a>
+    </div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Vehicle</th>
+            <th>Lot</th>
+            <th>Spot ID</th>
+            <th>Entry Time</th>
+            <th>Exit Time</th>
+            <th>Duration</th>
+            <th>Cost</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in records %}
+          <tr>
+            <td>{{ record.user_name }}</td>
+            <td>{{ record.user_email }}</td>
+            <td>{{ record.vehicle_number }}</td>
+            <td>{{ record.lot_address }}</td>
+            <td>{{ record.spot_id }}</td>
+            <td>{{ record.entry_ts }}</td>
+            <td>{{ record.exit_ts }}</td>
+            <td>{{ record.duration }}</td>
+            <td>{{ record.cost }}</td>
+            <td>
+              <span class="badge {% if record.status == 'Active' %}bg-success
+                          {% elif record.status == 'Scheduled' %}bg-info
+                          {% elif record.status == 'Cancelled' %}bg-secondary
+                          {% else %}bg-dark{% endif %}">
+                {{ record.status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

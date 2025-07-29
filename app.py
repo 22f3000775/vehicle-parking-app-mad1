@@ -1,6 +1,10 @@
 from flask import Flask
 from flask_login import LoginManager
 from backend.models import db, Admin, User
+from datetime import datetime, timezone, timedelta
+
+ 
+IST = timezone(timedelta(hours=0, minutes=0))
 
 def create_app():
     app = Flask(__name__)
@@ -28,9 +32,28 @@ def create_app():
         from backend.routes import routes_bp
         app.register_blueprint(routes_bp)
 
+    @app.template_filter('to_ist')
+    def to_ist_filter(utc_dt):
+        if not utc_dt:
+            return ''
+    
+    # If it's a string, convert to datetime
+        if isinstance(utc_dt, str):
+            try:
+                utc_dt = datetime.fromisoformat(utc_dt)
+            except ValueError:
+                return utc_dt  # Return original if parsing fails
+
+        if utc_dt.tzinfo is None:
+            utc_dt = utc_dt.replace(tzinfo=timezone.utc)
+
+        return utc_dt.astimezone(IST).strftime('%Y-%m-%d %H:%M')
+
     return app
 
 app = create_app()
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+

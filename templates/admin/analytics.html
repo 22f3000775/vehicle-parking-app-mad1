@@ -9,82 +9,116 @@
       background: #f5f7fa;
       color: #223456;
       padding: 30px 50px;
+      margin: 0;
       min-height: 100vh;
     }
+
     h1 {
-      margin-bottom: 32px;
-      font-weight: 700;
       font-size: 2.4rem;
-      letter-spacing: 1.2px;
+      font-weight: 700;
       border-bottom: 3px solid #223456;
       padding-bottom: 10px;
+      margin: 0;
     }
-    section {
-      margin-bottom: 50px;
-    }
-    section h2 {
+
+    h2 {
       font-size: 1.8rem;
       font-weight: 600;
       margin-bottom: 20px;
       color: #1f2a44;
     }
+
+    section {
+      margin-bottom: 50px;
+    }
+
     .stats p {
       font-size: 1.15rem;
       margin: 8px 0;
     }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+
+    .back-button {
+      padding: 8px 20px;
+      background: #223456;
+      color: white;
+      border-radius: 18px;
+      text-decoration: none;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: background 0.2s ease;
+    }
+
+    .back-button:hover {
+      background: #1a2942;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       background: white;
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgb(34 52 86 / 0.1);
+      box-shadow: 0 4px 12px rgba(34, 52, 86, 0.1);
       font-size: 1rem;
     }
+
     thead {
       background-color: #223456;
       color: white;
     }
+
     th, td {
-      padding: 12px 18px;
+      padding: 14px 20px;
       text-align: left;
-      border-bottom: 1px solid #ddd;
-      vertical-align: middle;
+      border-bottom: 1px solid #e5e5e5;
     }
+
     tbody tr:hover {
       background-color: #f0f4ff;
     }
-    /* Responsive tables */
+
     @media (max-width: 900px) {
       body {
         padding: 20px;
       }
+
       table, thead, tbody, th, td, tr {
         display: block;
         width: 100%;
       }
-      thead tr {
+
+      thead {
         display: none;
       }
+
       tbody tr {
-        margin-bottom: 1.2rem;
         background: white;
+        margin-bottom: 15px;
         border-radius: 10px;
-        box-shadow: 0 2px 8px rgb(34 52 86 / 0.1);
+        box-shadow: 0 2px 8px rgba(34, 52, 86, 0.1);
         padding: 12px;
       }
+
       tbody td {
-        border-bottom: none;
         position: relative;
         padding-left: 55%;
-        white-space: normal;
+        border: none;
         text-align: right;
       }
+
       tbody td::before {
         position: absolute;
         left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
         width: 45%;
-        white-space: nowrap;
         font-weight: 600;
         text-align: left;
         content: attr(data-label);
@@ -94,14 +128,12 @@
   </style>
 </head>
 <body>
-  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px;">
-    <h1 style="margin: 0;">Parking Analytics</h1>
-    <a href="{{ url_for('routes_bp.user_dashboard') }}" 
-       style="padding: 8px 20px; background: #223456; color: white; border-radius: 18px; text-decoration: none; font-weight: 600; white-space: nowrap;">
-      ← Return to Dashboard
-    </a>
+  <div class="top-bar">
+    <h1>Parking Analytics</h1>
+    <a href="{{ url_for('routes_bp.admin_dashboard') }}" class="back-button">← Return to Dashboard</a>
   </div>
 
+  <!-- Overall Statistics -->
   <section>
     <h2>Overall Statistics</h2>
     <div class="stats">
@@ -112,6 +144,16 @@
     </div>
   </section>
 
+  <!-- Reservation Summary -->
+  <section>
+    <h2>Reservation Summary</h2>
+    <div class="stats">
+      <p><strong>Active Bookings:</strong> {{ active_count }}</p>
+      <p><strong>Scheduled Bookings:</strong> {{ scheduled_count }}</p>
+    </div>
+  </section>
+
+  <!-- Parking Lots Table -->
   <section>
     <h2>Current Parking Lots Overview</h2>
     {% if lots_data %}
@@ -128,14 +170,14 @@
         </thead>
         <tbody>
           {% for lot in lots_data %}
-            <tr>
-              <td data-label="Lot ID">{{ lot.id }}</td>
-              <td data-label="Address">{{ lot.address }}</td>
-              <td data-label="Total Spots">{{ lot.total_spots }}</td>
-              <td data-label="Occupied Spots">{{ lot.occupied_spots }}</td>
-              <td data-label="Available Spots">{{ lot.total_spots - lot.occupied_spots }}</td>
-              <td data-label="Price (₹)">{{ lot.price }}</td>
-            </tr>
+          <tr>
+            <td data-label="Lot ID">{{ lot.id }}</td>
+            <td data-label="Address">{{ lot.address }}</td>
+            <td data-label="Total Spots">{{ lot.total_spots }}</td>
+            <td data-label="Occupied Spots">{{ lot.occupied_spots }}</td>
+            <td data-label="Available Spots">{{ lot.total_spots - lot.occupied_spots }}</td>
+            <td data-label="Price (₹)">{{ lot.price }}</td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
@@ -143,6 +185,5 @@
       <p>No parking lots found in the system.</p>
     {% endif %}
   </section>
-
 </body>
 </html>

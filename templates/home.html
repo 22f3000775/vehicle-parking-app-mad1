@@ -133,11 +133,7 @@
       <a class="find-button" href="{{ url_for('routes_bp.login') }}">Find My Spot</a>
     </div>
     <div class="right-content">
-      <img
-        class="illustration-img"
-        src="https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/images/84816787/74d7ecd7-af99-4fc7-b38e-2b4453424434/image.jpg"
-        alt="Parking Illustration"
-      />
+      <img src="{{ url_for('static', filename='images/parking.jpg') }}" alt="Parking Lot" />
     </div>
   </div>
 </body>

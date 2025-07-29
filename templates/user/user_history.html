@@ -148,10 +148,10 @@
                     <td>{{ r.spot.spot_number }}</td>
                     <td>{{ r.spot.lot.address }}</td>
                     <td>{% if r.vehicle %}{{ r.vehicle.vehicle_number }}{% else %}-{% endif %}</td>
-                    <td>{% if r.entry_ts %}{{ r.entry_ts.strftime('%Y-%m-%d %H:%M') }}{% else %}-{% endif %}</td>
+                    <td>{% if r.entry_ts %}{{ r.entry_ts.strftime('%Y-%m-%d %H:%M')|to_ist }}{% else %}-{% endif %}</td>
                     <td>
                         {% if r.exit_ts %}
-                            {{ r.exit_ts.strftime('%Y-%m-%d %H:%M') }}
+                            {{ r.exit_ts.strftime('%Y-%m-%d %H:%M')|to_ist }}
                         {% elif r.entry_ts %}
                             Active
                         {% else %}
