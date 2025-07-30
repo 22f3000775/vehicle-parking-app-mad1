@@ -160,7 +160,9 @@
                     </td>
                     <td>{{ r.status }}</td>
                     <td>
-                        {% if r.entry_ts and r.exit_ts %}
+                        {% if r.status == 'Scheduled' %}
+                            -
+                        {% elif r.entry_ts and r.exit_ts %}
                             {% set duration = ((r.exit_ts - r.entry_ts).total_seconds() // 60)|int %}
                             {{ duration if duration >= 0 else 0 }}
                         {% elif r.entry_ts %}
@@ -168,8 +170,9 @@
                         {% else %}
                             -
                         {% endif %}
-
                     </td>
+
+
                     
                     <td>&#8377; {{ ('%.2f'|format(r.cost)) }}</td>
                 </tr>

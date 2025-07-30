@@ -267,7 +267,6 @@
       </div>
       <div class="dropdown-content">
         <a href="#">{{ current_user.name }}</a>
-        <a href="#">Profile</a>
         <a href="{{ url_for('routes_bp.logout') }}">Logout</a>
       </div>
     </div>
@@ -423,7 +422,7 @@
       modal.classList.add('active');
     }
 
-    // Attach AJAX submit handlers after DOM loaded
+  
     document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('.end-booking-form').forEach(form => {
         form.addEventListener('submit', function(e) {

@@ -173,9 +173,11 @@
   </div>
 
   <div class="container">
-    <button class="back-btn" onclick="window.location.href='{{ url_for('routes_bp.admin_dashboard') }}'">
-      Return to Dashboard
-    </button>
+  <a href="{{ url_for('routes_bp.admin_dashboard') }}" class="back-btn">
+    Return to Dashboard
+  </a>
+</div>
+
 
     <div class="dashboard-panels">
       <div class="panel">
@@ -203,8 +205,8 @@
               <td>{{ spot.user_name }}</td>
               <td>{{ spot.vehicle_type }}</td>
               <td>{{ spot.vehicle_number }}</td>
-              <td>{{ spot.entry_ts | to_ist }}</td>
-              <td>{{ spot.exit_ts | to_ist }}</td>
+              <td>{{ spot.entry_ts }}</td>
+              <td>{{ spot.exit_ts }}</td>
               <td>{{ spot.duration_mins }}</td>
               <td>{{ "%.2f"|format(spot.cost) if spot.cost is not none else 'N/A' }}</td>
             </tr>

@@ -225,7 +225,7 @@ def delete_lot(lot_id):
 def occupied_spot_details():
     now = datetime.now(IST)
     
-    occupied_reservations = Reservation.query.filter_by(user_id=current_user.id, status="Active").all()
+    occupied_reservations = Reservation.query.filter_by(status="Active").all()
 
     spot_details = []
     for res in occupied_reservations:
@@ -280,21 +280,19 @@ def admin_analytics():
 
     active_count = Reservation.query.filter(
         Reservation.status == "Active",
-        Reservation.entry_ts <= now,
-        Reservation.exit_ts == None
+        Reservation.entry_ts <= now
     ).count()
 
 
     scheduled_count = Reservation.query.filter(
-        Reservation.status == 'Scheduled',
-        Reservation.entry_ts > now
+        Reservation.status == 'Scheduled'
+        #Reservation.entry_ts > now
     ).count()
 
     
     active_reservations = Reservation.query.filter(
         Reservation.status == "Active",
-        Reservation.entry_ts <= now,
-        Reservation.exit_ts == None
+        Reservation.entry_ts <= now
     ).all()
 
 
@@ -320,7 +318,8 @@ def admin_analytics():
         total_reservations=total_reservations,
         active_count=active_count,
         scheduled_count=scheduled_count,
-        total_revenue=total_revenue
+        total_revenue=total_revenue,
+        active_reservations = active_reservations
     )
 
 
@@ -370,15 +369,16 @@ def user_dashboard():
     inactive_bookings = Reservation.query.filter_by(user_id=current_user.id, status="Inactive").all()
     parking_lots = ParkingLot.query.all()
 
-    now = datetime.now(IST)
+    now = datetime.now(IST)  # ✅ Correct
+
+
     
         
     scheduled_bookings = (
         Reservation.query
         .filter(
             Reservation.user_id == current_user.id,
-            Reservation.status == 'Scheduled',
-            Reservation.entry_ts > now
+            Reservation.status == 'Scheduled'
         )
         .order_by(Reservation.entry_ts.asc())
         .all()
@@ -455,7 +455,8 @@ def spot_booking(lot_id):
 
     try:
         start_datetime = datetime.strptime(f"{booking_date} {booking_time}", "%Y-%m-%d %H:%M")
-        start_datetime = start_datetime.astimezone(IST)
+        start_datetime = IST.localize(start_datetime)
+
     except ValueError:
         flash("Invalid date or time format.", "danger")
         return redirect(url_for('routes_bp.spot_booking_location', location=lot.location))
@@ -478,7 +479,7 @@ def spot_booking(lot_id):
             status=reservation_status,
             cost=lot.price * booking_duration,
             vehicle_id=vehicle.id,
-            entry_ts=start_datetime.now(IST),
+            entry_ts=start_datetime,
             exit_ts=end_datetime,
         )
         db.session.add(new_reservation)
