@@ -59,31 +59,6 @@ IST = timezone(timedelta(hours=5, minutes=30))
 - Milestone-VP Summary-Users-Admin  
 - Milestone-VP Cost-Calculation  
 
-## File tree
 
--app.py
--backend
-┣ 📂__pycache__
-┃ ┣ create_initial_db.cpython-311.pyc
-┃ ┣ models.cpython-311.pyc
-┃ ┗ routes.cpython-311.pyc
-┣ create_initial_db.py
-┣ models.py
-┗ routes.py
--templates
-┣ 📂admin
-┃ ┣ all_parking_records.html
-┃ ┣ analytics.html
-┃ ┣ dashboard.html
-┃ ┣ occupied_spots.html
-┃ ┣ parking_lots.html
-┃ ┗ user_info.html
-┣ 📂user
-┃ ┣ dashboard.html
-┃ ┣ register.html
-┃ ┣ spot_booking_location.html
-┃ ┗ user_history.html
-┣ home.html
-┗ login.html
 
 
